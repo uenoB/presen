@@ -1,0 +1,191 @@
+/*
+ * presen.css - the fundamental styles for presen.js
+ * Copyright (C) 2018 Katsuhiro Ueno
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
+
+/* 1rem = 1/10 slide height */
+html { font-size: 10vh }
+@media screen and (max-aspect-ratio:16/9) { html.a16x9 { font-size: 5.625vw } }
+@media screen and (max-aspect-ratio:16/10) { html.a16x10 { font-size: 6.25vw } }
+@media screen and (max-aspect-ratio:297/210) { html.a4 { font-size: 7.0707vw } }
+@media screen and (max-aspect-ratio:4/3) { html { font-size: 7.5vw } }
+@media print { html { font-size: 19mm } }
+
+body { width: calc(10rem * 4 / 3) }
+html.a16x9 body { width: calc(10rem * 16 / 9) }
+html.a16x10 body { width: calc(10rem * 16 / 10) }
+html.a4 body { width: calc(10rem * 297 / 210) }
+
+html { background: silver }
+@media print { html { background: white } }
+
+html, body, footer, header, section, aside, main, nav, h1, h2, h3, h4, h5, h6,
+pre, textarea, p, ul, ol, li, dl, dt, dd, blockquote, table, th, td, tr, div {
+  padding: 0;
+  margin: 0;
+  border: 0;
+}
+
+html { transition: background-color .5s }
+body {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: auto;
+  font: .5rem/1.4 sans-serif;
+  -webkit-text-size-adjust: 100%; /* hack for android chrome */
+  color: black;
+  overflow-x: hidden;
+}
+header, section {
+  position: relative;
+  box-shadow: 0 .1rem .3rem rgba(0,0,0,.4);
+  margin: 1.2em 0;
+  padding: .015625rem .5rem 0 .5rem; /* needed to avoid margin collapsing */
+  width: auto;
+  min-height: 9.984375rem;
+  background: white;
+}
+section header, section section {
+  box-shadow: none;
+  border-bottom: 2px dashed grey;
+  margin: 0 0 0 -.5rem;
+  width: 100%;
+}
+section footer {
+  margin-left: -.5rem;
+  width: calc(100% + .5rem * 2 - .1rem * 2);
+}
+footer {
+  position: sticky; /* this requires section set to overflow:visible */
+  top: auto;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 .1rem;
+  width: auto;
+  height: 1em;
+  font-size: .25rem;
+  line-height: 1;
+  text-align: right;
+}
+
+html.presen_mode {
+  background-color: black;
+  overflow: hidden;
+}
+html.presen_mode body {
+  height: 10rem;
+  overflow: hidden;
+}
+header.prec, header.curr, header.succ,
+section.prec, section.curr, section.succ {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+  width: auto;
+  height: 10rem;
+  overflow: hidden;
+}
+html.presen_mode footer {
+  position: absolute;
+  margin: 0;
+  width: auto;
+}
+
+.page.prec, section.prec, header.prec { display: none }
+.page.succ, section.succ, header.succ, .step.succ { display: none }
+.npre, .ncur, .nsuc { position: static }
+
+.presen_toolbar, .presen_button, .presen_button_pressed {
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+#presen_toolbar {
+  position: fixed;
+  right: .3rem;
+  bottom: .3rem;
+  opacity: .8;
+}
+.presen_toolbar {
+  background: rgba(0,0,0,.5);
+  border-radius: .3rem;
+}
+.presen_button, .presen_button_pressed,
+.presen_button:hover, .presen_button_pressed:hover {
+  width: 1.5rem;
+  height: 1.5rem;
+  background: transparent;
+  font: .75rem/2 sans-serif;
+  text-align: center;
+  color: white;
+  text-decoration: none;
+}
+.presen_button_pressed, .presen_button_pressed:hover {
+  text-shadow: #fff 0 0 .1rem, #fff 0 0 .2rem;
+}
+html.presen_mode #presen_toolbar { display: none }
+@media print { #presen_toolbar { display: none } }
+
+textarea {
+  display: block;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  overflow: hidden;
+  resize: none;
+}
+textarea:not([rows]) { height: 8.5rem }
+textarea:not([cols]) { width: 100% }
+
+h1, h2, h3, h4, h5, h6 {
+  margin: .23rem 0 .23rem -.4rem;
+  color: #33b;
+  font-weight: bold;
+  font-size: .7rem;
+  line-height: 1.2;
+}
+header h1 { margin: 2.5rem 0 .5rem }
+li { margin-left: 1.5em }
+dd { margin: 0 0 .3em 1.5em }
+pre { font: .8em/1.4 monospace }
+table {
+  margin: 0 auto;
+  border-collapse: collapse;
+  border-spacing: 0;
+}
+th, td {
+  border: .025em solid black;
+  padding: .05em .35em;
+}
+p, pre, blockquote, ul, ol, dl, table {
+  margin-top: .3em;
+  margin-bottom: .3em;
+}

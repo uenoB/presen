@@ -1,0 +1,760 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>presen.js - a minimal HTML-based presentation tool</title>
+<script src="presen.js"></script>
+<script src="addons/fullscreen.js"></script>
+<script src="addons/editor.js"></script>
+<link rel="stylesheet" href="presen.css">
+<style>
+
+h1 code, h2 code, h3 code, h4 code, h5 code, h6 code, a code {
+  background: transparent;
+}
+th {
+  background: #eee;
+  font-weight: bold;
+}
+code {
+  background-color: #eee;
+}
+pre > code {
+  margin: .2em 0;
+  padding: .2em;
+  border-radius: .4em;
+  width: calc(100% - .2em * 2);
+  background-color: #eee;
+}
+pre code, pre code small, pre code strong {
+  display: inline-block;
+}
+pre code small {
+  font-size: 1em;
+  color: #aaa;
+}
+pre code strong {
+  border-radius: .2em;
+  background: #fbf;
+  font-weight: normal;
+}
+
+.right {
+  float:right;
+  margin:0 0 0 .3em;
+}
+.startnote {
+  border: 2px solid silver;
+  margin-top: 3em;
+  font-size: .8em;
+  line-height: 1;
+  padding: .5em 1em;
+}
+kbd.button {
+  display: inline-block;
+  margin: .05em 0;
+  padding: 0;
+  border: 0;
+  background-color: grey;
+  border-radius: .5em;
+  color: white;
+  width: 2em;
+  height: 2em;
+  font: 1em/2 sans-serif;
+  text-align: center;
+  vertical-align: middle;
+}
+
+section footer {
+  z-index: 9999;
+}
+footer a {
+  position:absolute;
+  left:0;
+  bottom:0;
+  padding: .125em .4em;
+  background: #33b;
+  color: white;
+  font-size: .8em;
+  text-decoration: none;
+}
+
+/* an example of customized page transition */
+pre code {
+  background-color: #eee;
+  border: thin solid #eee;
+}
+code.page.prec, code.page.curr, code.page.succ,
+code.step.prec, code.step.curr, code.step.succ {
+  display: inline-block;
+  transition: color .2s, background-color .2s, border-color .2s;
+  color: silver;
+}
+code.step.prec {
+  color: inherit;
+  background-color: transparent;
+  border-color: transparent;
+}
+code.page.curr, code.step.curr {
+  color: black;
+  background-color: #ff8;
+  border-color: #aa4;
+  border-radius: .3em;
+}
+code.leaf.page.curr, code.leaf.step.curr {
+  background-color: #0f0;
+  border-color: #4a4;
+}
+
+/* example of customized slide animation */
+section.prec, header.prec,
+section.curr, header.curr,
+section.succ, header.succ {
+  display: block;
+  visibility: visible;
+  transition: transform .2s, visibility .2s;
+}
+section.prec, header.prec { transform: translate(-100%,0) }
+section.curr, header.curr { transform: translate(0,0) }
+section.succ { transform: translate(100%,0) }
+header.succ { transform: translate(0,10rem) }
+.npre, .ncur, .nsuc { visibility: hidden }
+.ncur footer { visibility: visible }
+html.presen_mode_init section.prec, html.presen_mode_init header.prec,
+html.presen_mode_init section.succ, html.presen_mode_init header.succ {
+  transition: none;
+}
+
+</style>
+</head>
+<body spellcheck="false">
+
+<header>
+<h1>presen.js</h1>
+<p>A minimal HTML-based presentation tool</p>
+<p>Created by <a href="https://github.com/uenoB">Katsuhiro Ueno</a></p>
+<div>
+<a href="https://github.com/uenoB/presen/"><img style="position: absolute; top: 0; right: 0; border: 0; width:25%;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png"></a>
+</div>
+<div class="startnote">
+<p>
+Press <kbd class="button">&#x25B6;</kbd> to start the presentation.
+</p>
+<p>
+Use <kbd>Arrow</kbd> keys to navigate, <kbd>ESC</kbd> key to exit.
+</p>
+</div>
+</header>
+
+<section>
+<h2>Features of presen.js</h2>
+<dl>
+<dt><i>Lovely small</i></dt>
+<dd>vanilla JavaScript, less than 200 lines.</dd>
+<dt><i>Lovely simple</i></dt>
+<dd>only a few rules you need to learn.</dd>
+<dt><i>Lovely plain</i></dt>
+<dd>full control of HTML and CSS is left for you.</dd>
+<dt><i>Lovely in-brower editing</i></dt>
+<dd>quick and interactive edit using <code>&lt;textarea&gt;</code>.</dd>
+<dt><i>Lovely modern browsers required</i></dt>
+<dd>simplicity precedes compatibility.</dd>
+</dl>
+</section>
+
+<section>
+<h2>Table of Contents</h2>
+<nav>
+<ol>
+<li><a href="#getting_started">Getting started</a></li>
+<li><a href="#pages">Transition control</a></li>
+<li><a href="#detail">Technical details</a></li>
+<li><a href="#license">License terms</a></li>
+</ol>
+</nav>
+</section>
+
+<section id="getting_started">
+<header>
+<h2>Getting started</h2>
+<nav>
+<ol>
+<li><a href="#empty_html">Start with an empty HTML5 file</a></li>
+<li><a href="#enable">Enable presen.js</a></li>
+<li><a href="#title_slide">Title slide</a></li>
+<li><a href="#main_slide">Main slides</a></li>
+<li><a href="#footer">Footer</a></li>
+<li><a href="#textarea_slide">Textarea slides</a></li>
+<li><a href="#mode">Presentation mode</a></li>
+</ol>
+</nav>
+</header>
+
+<section id="empty_html">
+<h3>Start with an empty HTML5 file</h3>
+<p>The initial file should look like this:</p>
+<pre>
+<code>&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+  &lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;My Awesome Slides&lt;/title&gt;
+    <strong>&lt;!-- put scripts here --&gt;</strong>
+  &lt;/head&gt;
+  &lt;body&gt;
+    <strong>&lt;!-- put slides here --&gt;</strong>
+  &lt;/body&gt;
+&lt;/html&gt;</code>
+</pre>
+</section>
+
+<section id="enable">
+<h3>Enable presen.js</h3>
+<p>Put the following two lines in <code>&lt;head&gt;</code>:</p>
+<pre>
+<code><small>  &lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;title&gt;My Awesome Slides&lt;/title&gt;</small>
+    <strong>&lt;script src="presen.js"&gt;&lt;/script&gt;
+&lt;link rel="stylesheet" href="presen.css"&gt;</strong>
+  <small>&lt;/head&gt;</small></code>
+</pre>
+<p>To enable addons and themes, additional
+<code>&lt;script&gt;</code>
+and
+<code>&lt;link&gt;</code>
+would be needed.
+</p>
+<p>See <a href="#addons">Addons</a> for details.</p>
+</section>
+
+<section id="title_slide">
+<h3>Title slide</h3>
+<p>Each <code>&lt;header&gt;</code> or <code>&lt;section&gt;</code>
+constitutes a slide.
+<p>For the title slide, <code>&lt;header&gt;</code> should be used.</p>
+<pre>
+<code><small>  &lt;body&gt;</small>
+    <strong>&lt;header&gt;
+  &lt;h1&gt;The Awesome Presentation&lt;/h1&gt;
+  &lt;p&gt;Awesome Samurai&lt;/p&gt;
+  &lt;p&gt;Mar 4, 2112&lt;/p&gt;
+&lt;/header&gt;</strong>
+  <small>&lt;/body&gt;</small></code>
+</pre>
+</section>
+
+<section id="main_slide">
+<h3>Main slides</h3>
+<p>After <code>&lt;header&gt;</code>,
+write slides as <code>&lt;section&gt;</code>s.</p>
+<pre>
+<code><small>      &lt;p&gt;Mar 4, 2112&lt;/p&gt;
+    &lt;/header&gt;</small>
+    <strong>&lt;section&gt;
+  &lt;h2&gt;Awesome Self-introduction&lt;/h2&gt;
+  &lt;ul&gt;
+    &lt;li&gt;The Awesome Samurai&lt;/li&gt;
+    &lt;li&gt;Born in the Awesome town&lt;/li&gt;
+  &lt;/ul&gt;
+&lt;/section&gt;</strong>
+  <small>&lt;/body&gt;</small></code>
+</pre>
+<p>All of the HTML5 features are available.</p>
+</section>
+
+<section id="footer">
+<h3>Footer</h3>
+<p><code>&lt;footer&gt;</code> is shown at the bottom of each slide.</p>
+<pre>
+<code><small>      &lt;/ul&gt;
+    &lt;/section&gt;</small>
+    <strong>&lt;footer&gt;
+  My Awesome Slide No.
+  &lt;span class="presen_slide_index"&gt;0&lt;/span&gt;
+&lt;/footer&gt;</strong>
+  <small>&lt;/body&gt;</small></code>
+</pre>
+<p>The <code>&lt;span class="presen_slide_index"&gt;</code> is substituted with the
+index number of each slide.</p>
+<p>See <a href="#subst">Substitutions</a> for details.</p>
+</section>
+
+<section id="textarea_slide">
+<h3>Textarea slides</h3>
+<pre><textarea>
+Feel annoyed with editing/reloading HTML files?
+
+Try textarea slides!
+
+    <section>
+      <h2>Slide Title</h2>
+      <textarea>blah blah blah ...&lt;/textarea>
+    </section>
+
+<textarea> allows you to
+* be free from the hell of markups,
+* edit slides within the web brower, and
+* make figures as well as texts with characters.
+
+Click here and edit me!
+</textarea></pre>
+</section>
+
+<section id="mode">
+<h3>Presentation mode</h3>
+<p>Press <kbd class="button">&#x25B6;</kbd> and start the presentation.</p>
+<p>Key bindings in presentation mode:</p>
+<table>
+<tr><th>Key</th><th>Action</th></tr>
+<tr><td><kbd>Left</kbd>, <kbd>Up</kbd>, <kbd>PageUp</kbd></td>
+    <td>Go previous slide</td></tr>
+<tr><td><kbd>Right</kbd>, <kbd>Down</kbd>, <kbd>PageDown</kbd></td>
+    <td>Go next slide</td></tr>
+<tr><td><kbd>b</kbd></td>
+    <td>Toggle blackout</td></tr>
+<tr><td>Any other keys</td>
+    <td rowspan="2">Exit</td></tr>
+<tr><td>Click a link, etc.</td></tr>
+</table>
+<p>Swipe is also available on touch screens.</p>
+</section>
+
+<footer>
+<a href="#getting_started">Getting Started</a>
+</footer>
+</section>
+
+<section id="pages">
+<header>
+<h2>Transition control</h2>
+<nav>
+<ul>
+<li><a href="#frag">Fragmented slides</a></li>
+<li><a href="#step_class"><code>step</code> class</a></li>
+<li><a href="#page_class"><code>page</code> class</a></li>
+<li><a href="#page_mixed"><code>step</code> and <code>page</code> can be mixed</a></li>
+<li><a href="#how_page_work">How <code>step</code> and <code>page</code> work</a></li>
+<li><a href="#section_page">How slides are switched</a></li>
+</ul>
+</nav>
+</header>
+
+<section id="frag">
+<h3>Fragmented slides</h3>
+<p>Two classes for fragmented slides:</p>
+<ul>
+<li><code>step</code>: show fragments step-by-step</li>
+<li><code>page</code>: show a fragment only in a single step</li>
+</ul>
+<p>To make a slide fragemented,
+specify these classes to the fragment elements in the slide.</p>
+</section>
+
+<section id="step_class">
+<h3><code>step</code> class</h3>
+<p>
+<span class="step">To show fragmented contents step-by-step,</span>
+<span class="step">specify <code>step</code> class</span>
+<span class="step">for each fragment</span>
+<span class="step">like this:</span>
+</p>
+<pre class="step">
+<code>&lt;p&gt;
+  &lt;span <strong>class="step"</strong>&gt;To show ...&lt;/span&gt;
+  &lt;span <strong>class="step"</strong>&gt;specify ...&lt;/span&gt;
+  &lt;span <strong>class="step"</strong>&gt;for each fragment&lt;/span&gt;
+  &lt;span <strong>class="step"</strong>&gt;like this:&lt;/span&gt;
+&lt;/p&gt;</code>
+</pre>
+<p class="step">
+When a slide is shown,
+only its first <code>step</code> is presented.
+</p>
+</section>
+
+<section id="page_class">
+<h3><code>page</code> class</h3>
+<p class="step">
+To replace a fragment in each step,
+use <code>page</code> class instead of <code>step</code>.
+</p>
+<pre class="page">
+  [ ]
+ Step 1
+</pre>
+<pre class="page">
+  [*]----------&gt;[ ]
+ Step 1        Step 2
+</pre>
+<pre class="page">
+  [*]----------&gt;[*]----------&gt;[ ]
+ Step 1        Step 2        Step 3
+</pre>
+<pre class="step">
+  [*]----------&gt;[*]----------&gt;[*]   Completed!
+ Step 1        Step 2        Step 3
+</pre>
+<p class="step">
+This is achived by the following code:
+</p>
+<pre class="step">
+<code>&lt;pre <strong>class="page"</strong>&gt; [ ] &lt;/pre&gt;
+&lt;pre <strong>class="page"</strong>&gt; [*]----&gt;[ ] &lt;/pre&gt;
+&lt;pre <strong>class="page"</strong>&gt; [*]----&gt;[*]----&gt;[ ] &lt;/pre&gt;
+&lt;pre <strong>class="step"</strong>&gt; [*]----&gt;[*]----&gt;[*] &lt;/pre&gt;</code>
+</pre>
+</section>
+
+<section id="page_mixed">
+<h3><code>step</code> and <code>page</code> can be mixed</h3>
+<div class="right"><pre>
+<code>&lt;ul <strong>class="page"</strong>&gt;
+  &lt;li <strong>class="step"</strong>&gt;11&lt;/li&gt;
+  &lt;li <strong>class="step"</strong>&gt;12&lt;/li&gt;
+  &lt;li <strong>class="step"</strong>&gt;13&lt;/li&gt;
+  &lt;li&gt;14&lt;/li&gt;
+&lt;/ul&gt;
+&lt;ol <strong>class="page"</strong>&gt;
+  &lt;li <strong>class="step"</strong>&gt;21&lt;/li&gt;
+  &lt;li <strong>class="page"</strong>&gt;22&lt;/li&gt;
+  &lt;li <strong>class="step"</strong>&gt;23&lt;/li&gt;
+  &lt;li&gt;24&lt;/li&gt;
+&lt;/ol&gt;</code>
+</pre></div>
+<ul class="page">
+<li class="step">11</li>
+<li class="step">12</li>
+<li class="step">13</li>
+<li>14</li>
+</ul>
+<ol class="page">
+<li class="step">21</li>
+<li class="page">22</li>
+<li class="step">23</li>
+<li>24</li>
+</ol>
+<p style="clear:both">Check out how they work in presentation mode.</p>
+</section>
+
+<section id="how_page_work">
+<h3>How <code>step</code> and <code>page</code> work</h3>
+<div class="right"><pre>
+<code><code class="page">&lt;ul class="page"&gt;
+  <code class="step leaf">&lt;li class="step"&gt;11&lt;/li&gt;</code>
+  <code class="step leaf">&lt;li class="step"&gt;12&lt;/li&gt;</code>
+  <code class="step leaf">&lt;li class="step"&gt;13&lt;/li&gt;</code>
+  &lt;li&gt;14&lt;/li&gt;
+&lt;/ul&gt;</code>
+<code class="page">&lt;ol class="page"&gt;
+  <code class="step leaf">&lt;li class="step"&gt;21&lt;/li&gt;</code>
+  <code class="page leaf">&lt;li class="page"&gt;22&lt;/li&gt;</code>
+  <code class="step leaf">&lt;li class="step"&gt;23&lt;/li&gt;</code>
+  &lt;li&gt;24&lt;/li&gt;
+&lt;/ol&gt;</code></code>
+</pre></div>
+<p><kbd>Right</kbd> goes to the next <code>step</code> or <code>page</code>
+that contains neither <code>step</code> nor <code>page</code>
+(<kbd>Left</kbd> is vice versa).</p>
+<p>
+The current <code>step</code> or <code>page</code>, its ancestors,
+and past <code>step</code>s are visible.
+</p>
+</section>
+
+<section id="section_page">
+<h3>How slides are switched</h3>
+<div class="right"><pre>
+<code class="page"><code class="page leaf">&lt;header&gt;&lt;/header&gt;</code>
+<code class="page">&lt;section&gt;
+  <code class="page leaf">&lt;header&gt;...&lt;/header&gt;</code>
+  <code class="page leaf">&lt;section&gt;
+  <code class="page leaf">&lt;p class="page"&gt;...&lt;/p&gt;</code>
+  <code class="page leaf">&lt;p class="page"&gt;...&lt;/p&gt;</code>
+&lt;/section&gt;</code>
+  <code class="page leaf">&lt;section&gt;...&lt;/section&gt;</code>
+  &lt;footer&gt;...&lt;/footer&gt;
+&lt;/section&gt;</code>
+<code class="page leaf">&lt;section&gt;...&lt;/section&gt;</code>
+&lt;footer&gt;...&lt;/footer&gt;</code>
+</pre></div>
+<p>Each <code>&lt;header&gt;</code> and <code>&lt;section&gt;</code>
+is regarded as a <code>page</code> by default.</p>
+<p>They follow the same principal as
+<code>step</code> and <code>page</code>.</p>
+</section>
+
+<footer>
+<a href="#pages">Transition control</a>
+</footer>
+</section>
+
+<section id="addons">
+<header>
+<h2>Addons</h2>
+<p>Some optional features are provided as addons
+so that you can remove them if not needed.</p>
+<nav>
+<ul>
+<li><a href="#fullscreen_addon"><code>fullscreen</code> addon</a></li>
+<li><a href="#editor_addon"><code>editor</code> addon</a></li>
+</ul>
+</nav>
+</header>
+
+<section id="fullscreen_addon">
+<h3><code>fullscreen</code> addon</h3>
+<p>This adds <kbd class="button">&#x2B1A;</kbd> button
+that toggles the full-screen mode.</p>
+<p>To enable this, put the following in <code>&lt;head&gt;</code>:</p>
+<pre>
+<code><small>  &lt;head&gt;
+    ...</small>
+    &lt;script src="presen.js"&gt;&lt;/script&gt;
+    <strong>&lt;script src="addons/fullscreen.js"&gt;&lt;/script&gt;</strong>
+    <small>&lt;link rel="stylesheet" href="presen.css"&gt;</small></code>
+</pre>
+<p>It would be needed only if your browser does not have a full-screen
+switch.</p>
+</section>
+
+<section id="editor_addon">
+<h3><code>editor</code> addon</h3>
+<p>This makes the browser a simple slide editor.</p>
+<p>Two buttons are added:</p>
+<ul>
+<li><kbd class="button">+</kbd> appends a new textarea slide.</li>
+<li><kbd class="button">&#x2B07;</kbd> saves slides to an HTML file.</li>
+</ul>
+<p>To enable this, put the following in <code>&lt;head&gt;</code>:</p>
+<pre>
+<code><small>  &lt;head&gt;
+    ...</small>
+    &lt;script src="presen.js"&gt;&lt;/script&gt;
+    <strong>&lt;script src="addons/editor.js"&gt;&lt;/script&gt;</strong>
+    <small>&lt;link rel="stylesheet" href="presen.css"&gt;</small></code>
+</pre>
+</section>
+
+<footer>
+<a href="#addons">Addons</a>
+</footer>
+</section>
+
+<section id="detail">
+<header>
+<h2>Technical details</h2>
+<nav>
+<ul>
+<li><a href="#reserved">Reserved IDs and classes</a></li>
+<li><a href="#size">Slide size configuration</a></li>
+<li><a href="#subst">Substitutions</a></li>
+<li><a href="#detect">Page detection</a></li>
+<li><a href="#switch">Page switching</a></li>
+<li><a href="#diff_page_step">How <code>step</code> differs from <code>page</code></a></li>
+<li><a href="#init">Entering presentation mode</a></li>
+<li><a href="#click_event">Click event handling</a></li>
+<li><a href="#stylesheet">Notes on stylesheet</a></li>
+<li><a href="#scripting">Notes on scripting</a></li>
+</ul>
+</nav>
+</header>
+
+<section id="reserved">
+<h3>Reserved IDs and classes</h3>
+<ul>
+<li>
+All IDs and classes that begin with <code>presen_</code>
+are reserved for the use of presen.js and its addons.
+</li>
+<li>
+The following classes have special meanings in presen.js:
+<pre><code>page step prec curr succ npre ncur nsuc</code></pre>
+You should not use them for other purposes.
+</li>
+</ul>
+</section>
+
+<section id="size">
+<h3>Slide size configuration</h3>
+<p>The size of slides can be changed
+by specifying one of the following classes to <code>&lt;html&gt;</code>:</p>
+<ul>
+<li><code>a16x9</code> (16:9, HD)</li>
+<li><code>a16x10</code> (16:10, WXGA+)</li>
+<li><code>a4</code> (297:210, A4 paper)</li>
+</ul>
+<p>The default is 4:3 (VGA).</p>
+<p>For example, for MacBook users:</p>
+<pre>
+<code><small>&lt;!DOCTYPE html&gt;</small>
+&lt;html <strong>class="a16x10"</strong>&gt;
+  <small>&lt;head&gt;
+  ...</small></code>
+</pre>
+</section>
+
+<section id="subst">
+<h3>Substitutions</h3>
+<p>The contents of the elements of the following classes are
+substituted in presentation mode:</p>
+<dl>
+<dt><code>presen_slide_index</code></dt>
+<dd>the index number of the current slide.</dd>
+<dt><code>presen_slide_total</code></dt>
+<dd>the total number of slides.</dd>
+</dl>
+</section>
+
+<section id="detect">
+<h3>Page detection</h3>
+<p>The elements forming pages (transition steps) are
+determined by the following CSS selector:</p>
+<pre><code>section, header, .page, .step</code></pre>
+<p>This can be changed by modifying <code>Presen.pageSelector</code>
+variable.</p>
+<p>For example, this makes every <code>&lt;li&gt;</code> a page:</p>
+<pre>
+<code><small>&lt;script src="presen.js"&gt;&lt;/script&gt;</small>
+<strong>&lt;script&gt;Presen.pageSelector =
+  'section, header, .page, .step, li';&lt;/script&gt;</strong></code>
+</pre>
+</section>
+
+<section id="switch">
+<h3>Page switching</h3>
+<p>In presentation mode, every page element has one of the
+following classes:</p>
+<ul>
+<li><code>curr</code>: the current page or its ancestor</li>
+<li><code>prec</code>: prior to the current page</li>
+<li><code>succ</code>: subsequent to the current page</li>
+</ul>
+<p>For outer elements of nested sections,
+<code>npre</code>, <code>ncur</code>, and
+<code>nsuc</code> are set instead of the above.</p>
+<p>A transition step is performed by toggling these classes of
+each page element.</p>
+<p>The visual effect of a transition is realized only by CSS.</p>
+</section>
+
+<section id="diff_page_step">
+<h3>How <code>step</code> differs from <code>page</code></h3>
+<p>They differ only in their styles:</p>
+<pre>
+<code>   .page.prec { display: none }
+   .page.succ { display: none }
+<small>/* .step.prec { display: none } */</small>
+   .step.succ { display: none }</code>
+</pre>
+<p>As in these,
+you can customize the effect of page transition
+by writing styles for <code>.prec</code>, <code>.curr</code>,
+and <code>.succ</code>.</p>
+<p>See also:</p>
+<ul>
+<li><a href="presen.css"><code>presen.css</code></a> for the
+actual definitions.</li>
+<li>The source of <a href="#how_page_work">How <code>page</code> works</a>
+slide.</li>
+</ul>
+</section>
+
+<section id="init">
+<h3>Entering presentation mode</h3>
+<p>When the presentation mode starts, the following occur:</p>
+<ul>
+<li><p><code>presen_mode</code> is added to the class list of
+<code>&lt;html&gt;</code>.
+This is removed when the presentation mode exits.</p></li>
+<li><p><code>presen_mode_init</code> is added to the class list
+of <code>&lt;html&gt;</code> and removed immediately.</p>
+<p>This is useful for custom stylesheets to distinguish
+initialization from transitions
+(see the source of this file for example).</p></li>
+</ul>
+</section>
+
+<section id="click_event">
+<h3>Click event handling</h3>
+<p>In presentation mode,
+the default behavior of <code>click</code> event is overriden
+by a <code>window</code>'s event listener.</p>
+<p>When an element with non-negative <code>tabIndex</code> is clicked and
+the click event is propagated without <code>preventDefault</code> being
+called,<p>
+<ol>
+<li>the click event is discarded,</li>
+<li>the presentation mode exits, and</li>
+<li>another click event is triggered again on the original target of
+the click.</li>
+</ol>
+<p>To control this, set <code>tabindex</code> attributes explicitly.</p>
+</section>
+
+<section id="stylesheet">
+<h3>Notes on stylesheet</h3>
+<ul>
+<li><code>1rem</code> is set to the 1/10 of the slide height.</li>
+<li>Every <code>&lt;header&gt;</code>, <code>&lt;section&gt;</code>,
+and <code>&lt;footer&gt;</code> has
+<code>position</code> set to something other than <code>static</code>;
+so, the elements in a slide is positioned relative to the slide.</li>
+<li>In presentation mode, all slides are stacked up at the same place.
+A slide transition animation can be performed by transforming the
+stacked slides with CSS (see the source of this file for example).</li>
+</ul>
+</section>
+
+<section id="scripting">
+<h3>Notes on scripting</h3>
+<ul>
+<li><p>presen.js is initialized in the capturing phase of
+the <code>load</code> event by a <code>window</code>'s event handler.</p>
+<p>To make sure that your script runs after presen.js is
+initialized, avoid adding a <code>load</code> listener of the capturing
+phase.</p>
+</li>
+</ul>
+</section>
+
+<footer>
+<a href="#detail">Technical Details</a>
+</footer>
+</section>
+
+<section id="license">
+<h2>License terms</h2>
+<pre style="font-size: .5em">
+presen.js (including this file) is distributed under the following terms:
+
+Copyright (C) 2018 Katsuhiro Ueno
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the "Software"),
+to deal in the Software without restriction, including without limitation
+the rights to use, copy, modify, merge, publish, distribute, sublicense,
+and/or sell copies of the Software, and to permit persons to whom the
+Software is furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.
+</pre>
+</section>
+
+<footer>
+<span class="pageno">
+<span class="presen_slide_index">0</span>
+ / <span class="presen_slide_total">0</span>
+</span>
+</footer>
+</body>
+</html>
